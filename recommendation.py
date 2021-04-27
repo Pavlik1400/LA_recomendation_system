@@ -53,7 +53,7 @@ def load_data(filename, nth=1, statistics=True):
         print(f"Ratings: {data.shape[0]}")
         print(f"Users: {len(data.Cust_Id.unique())}")
         print(f"Movies: {len(data.Movie_Id.unique())}")
-        print("Median user/movie" % data.Cust_Id.value_counts().median())
+        print(f"Median user/movie {data.Cust_Id.value_counts().median()}")
         print(f"Rating range: {min_, max_}")
     reader = surprise.Reader(rating_scale=(min_, max_))
     return surprise.Dataset.load_from_df(data, reader)
@@ -71,10 +71,10 @@ def run_experiment(algorithm, params, data, n_cores=-1, n_split=10):
 
 
 if __name__ == '__main__':
-   data = load_data("", 10)
+   data = load_data("comb_prep_1.csv", 100)
 
    parameters = {'lr_all' :[0.005 ,0.01],
-                 'n_epochs' :[5 ,10],
+                 'n_epoch' :[5 ,10],
                  'n_factors' :[10 ,20]}
 
    results = run_experiment(FunkSVD, parameters, data)
