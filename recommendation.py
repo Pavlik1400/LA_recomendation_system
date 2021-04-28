@@ -1,13 +1,5 @@
 import numpy as np
-import pandas as pd
 import surprise
-import json
-
-class NumpyEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, np.ndarray):
-            return obj.tolist()
-        return json.JSONEncoder.default(self, obj)
 
 class FunkSVD(surprise.AlgoBase):
     # Randomly initializes two Matrices, Stochastic Gradient Descent to be able to optimize the best factorization for ratings.
@@ -26,10 +18,10 @@ class FunkSVD(surprise.AlgoBase):
         for epoch in range(self.num_epochs):
 
             for u, i, r_ui in train.all_ratings():
-                residual = r_ui - np.dot(P[u], Q[i])
-                temp = P[u, :]  # we want to update them at the same time, so we make a temporary variable.
-                P[u, :] += self.alpha * residual * Q[i]
-                Q[i, :] += self.alpha * residual * temp
+                residual = r_ui - P[u] @ Q[i]
+                temp = P[u]  # we want to update them at the same time, so we make a temporary variable.
+                P[u] += self.alpha * residual * Q[i]
+                Q[i] += self.alpha * residual * temp
         self.P = P
         self.Q = P
 
@@ -39,58 +31,60 @@ class FunkSVD(surprise.AlgoBase):
 
         if self.trainset.knows_user(u) and self.trainset.knows_item(i):
             # return scalar product of P[u] and Q[i]
-            nanCheck = np.dot(self.P[u], self.Q[i])
+            nanCheck = self.P[u] @ self.Q[i]
 
             if np.isnan(nanCheck):
                 return self.trainset.global_mean
             else:
-                return np.dot(self.P[u, :], self.Q[i, :])
+                return nanCheck
         else:  # if its not known we'll return the general average.
             return self.trainset.global_mean
 
-def load_data(filename, nth=1, statistics=True):
-    assert int(nth) == nth, "nth has to be integer"
-    data = pd.read_csv(filename)
-    data.drop_duplicates(inplace=True)
-    if nth != 1:
-        data = data[data.index % nth == 0]
-    min_, max_ = data.Rating.min(), data.Rating.max()
-    if statistics:
-        print(f"Ratings: {data.shape[0]}")
-        print(f"Users: {len(data.Cust_Id.unique())}")
-        print(f"Movies: {len(data.Movie_Id.unique())}")
-        print(f"Median user/movie {data.Cust_Id.value_counts().median()}")
-        print(f"Rating range: {min_, max_}")
-    # change the order
-    data = data[['Cust_Id', 'Movie_Id', 'Rating']]
-    reader = surprise.Reader(rating_scale=(min_, max_))
-    return surprise.Dataset.load_from_df(data, reader)
+class BaisedFunkSVD(surprise.AlgoBase):
+    # Randomly initializes two Matrices, Stochastic Gradient Descent to be able to optimize the best factorization for ratings.
+    def __init__(self, lr_all, reg_all, n_epoch, n_factors, **kwargs):
+        # super(surprise.AlgoBase)
+        super().__init__(**kwargs)
+        self.lr_all = lr_all  # learning rate for Stochastic Gradient Descent
+        self.n_epoch = n_epoch
+        self.n_factors = n_factors
+        self.reg_all = reg_all
 
-def run_experiment(algorithm, params, data, n_cores=-1, n_split=2):
-    gs = surprise.model_selection.GridSearchCV(algorithm,
-                                               param_grid=params,
-                                               measures=['rmse'],
-                                               return_train_measures=True,
-                                               cv=surprise.model_selection.KFold(n_splits=n_split, shuffle=True),
-                                               refit=True,
-                                               n_jobs=n_cores)
-    gs.fit(data)
-    return gs
+    def fit(self, train):
+        # randomly initialize user/item factors from a Gaussian
+        # base = (train.global_mean/self.n_factors)**0.5
+        P = np.random.normal(0, .1, (train.n_users, self.n_factors))
+        Q = np.random.normal(0, .1, (train.n_items, self.n_factors))
+        u_bias = np.random.normal(0, .1, train.n_users)
+        i_bias = np.random.normal(0, .1, train.n_items)
 
+        for epoch in range(self.n_epoch):
+            for u, i, r_ui in train.all_ratings():
+                err = r_ui - (P[u] @ Q[i] + u_bias[u] + i_bias[i])
+                prevP = P[u].copy()  # we want to update them at the same time, so we make a temporary variable.
+                u_bias[u] += self.lr_all * (err - self.reg_all * u_bias[u])
+                i_bias[i] += self.lr_all * (err - self.reg_all * i_bias[i])
+                P[u] += self.lr_all * (err * Q[i] - self.reg_all * P[u])
+                Q[i] += self.lr_all * (err * prevP - self.reg_all * Q[i])
+        self.P = P
+        self.Q = P
+        self.u_bias = u_bias
+        self.i_bias = i_bias
 
+        self.trainset = train
 
-if __name__ == '__main__':
-   data = load_data("comb_prep_1.csv", 100)
+    def estimate(self, u, i):
 
+        if self.trainset.knows_user(u) and self.trainset.knows_item(i):
+            # return scalar product of P[u] and Q[i]
+            prediction = self.P[u] @ self.Q[i] + self.u_bias[u] + self.i_bias[i]
 
-
-   parameters = {'lr_all' :[0.002, 0.005, 0.01],
-                 'n_epoch' :[5, 10],
-                 'n_factors' :[10, 15, 20]}
-   results = run_experiment(FunkSVD, parameters, data)
-
-   with open('result.json', 'w') as fp:
-       json.dump(results.cv_results, fp, indent=4, cls=NumpyEncoder)
+            if np.isnan(prediction):
+                return self.trainset.global_mean
+            else:
+                return prediction
+        else:  # if its not known we'll return the general average.
+            return self.trainset.global_mean
 
 
 
