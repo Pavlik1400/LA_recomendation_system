@@ -47,12 +47,12 @@ if __name__ == '__main__':
 
 
     parameters = {
-            "lr_all": [0.005, 0.01],
-            "n_epoch": [10, 20],
-            "n_factors": [10, 20],
-            "reg_all" : [0.02, 0.05]
+            "lr_all": [0.01],
+            "n_epoch": [20],
+            "n_factors": [10],
+            "reg_all": [0.02]
         }
     results = run_experiment(BaisedFunkSVD, parameters, data, n_split=2)
     print(results.cv_results)
-    with open('result.json', 'w') as fp:
+    with open('result4.json', 'w') as fp:
        json.dump(results.cv_results, fp, indent=4, cls=NumpyEncoder)

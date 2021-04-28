@@ -52,15 +52,14 @@ class BaisedFunkSVD(surprise.AlgoBase):
 
     def fit(self, train):
         # randomly initialize user/item factors from a Gaussian
-        # base = (train.global_mean/self.n_factors)**0.5
         P = np.random.normal(0, .1, (train.n_users, self.n_factors))
         Q = np.random.normal(0, .1, (train.n_items, self.n_factors))
         u_bias = np.random.normal(0, .1, train.n_users)
         i_bias = np.random.normal(0, .1, train.n_items)
-
+        self.mu = train.global_mean
         for epoch in range(self.n_epoch):
             for u, i, r_ui in train.all_ratings():
-                err = r_ui - (P[u] @ Q[i] + u_bias[u] + i_bias[i])
+                err = r_ui - (self.mu + P[u] @ Q[i] + u_bias[u] + i_bias[i])
                 prevP = P[u].copy()  # we want to update them at the same time, so we make a temporary variable.
                 u_bias[u] += self.lr_all * (err - self.reg_all * u_bias[u])
                 i_bias[i] += self.lr_all * (err - self.reg_all * i_bias[i])
@@ -70,14 +69,13 @@ class BaisedFunkSVD(surprise.AlgoBase):
         self.Q = P
         self.u_bias = u_bias
         self.i_bias = i_bias
-
         self.trainset = train
 
     def estimate(self, u, i):
 
         if self.trainset.knows_user(u) and self.trainset.knows_item(i):
             # return scalar product of P[u] and Q[i]
-            prediction = self.P[u] @ self.Q[i] + self.u_bias[u] + self.i_bias[i]
+            prediction = self.mu + self.P[u] @ self.Q[i] + self.u_bias[u] + self.i_bias[i]
 
             if np.isnan(prediction):
                 return self.trainset.global_mean
