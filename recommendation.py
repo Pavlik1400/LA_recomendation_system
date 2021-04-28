@@ -1,7 +1,13 @@
 import numpy as np
 import pandas as pd
 import surprise
+import json
 
+class NumpyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return json.JSONEncoder.default(self, obj)
 
 class FunkSVD(surprise.AlgoBase):
     # Randomly initializes two Matrices, Stochastic Gradient Descent to be able to optimize the best factorization for ratings.
@@ -55,15 +61,18 @@ def load_data(filename, nth=1, statistics=True):
         print(f"Movies: {len(data.Movie_Id.unique())}")
         print(f"Median user/movie {data.Cust_Id.value_counts().median()}")
         print(f"Rating range: {min_, max_}")
+    # change the order
+    data = data[['Cust_Id', 'Movie_Id', 'Rating']]
     reader = surprise.Reader(rating_scale=(min_, max_))
     return surprise.Dataset.load_from_df(data, reader)
 
-def run_experiment(algorithm, params, data, n_cores=-1, n_split=10):
+def run_experiment(algorithm, params, data, n_cores=-1, n_split=2):
     gs = surprise.model_selection.GridSearchCV(algorithm,
                                                param_grid=params,
                                                measures=['rmse'],
                                                return_train_measures=True,
-                                               cv=n_split,
+                                               cv=surprise.model_selection.KFold(n_splits=n_split, shuffle=True),
+                                               refit=True,
                                                n_jobs=n_cores)
     gs.fit(data)
     return gs
@@ -73,12 +82,15 @@ def run_experiment(algorithm, params, data, n_cores=-1, n_split=10):
 if __name__ == '__main__':
    data = load_data("comb_prep_1.csv", 100)
 
-   parameters = {'lr_all' :[0.005 ,0.01],
-                 'n_epoch' :[5 ,10],
-                 'n_factors' :[10 ,20]}
 
+
+   parameters = {'lr_all' :[0.002, 0.005, 0.01],
+                 'n_epoch' :[5, 10],
+                 'n_factors' :[10, 15, 20]}
    results = run_experiment(FunkSVD, parameters, data)
-   print(results)
+
+   with open('result.json', 'w') as fp:
+       json.dump(results.cv_results, fp, indent=4, cls=NumpyEncoder)
 
 
 
