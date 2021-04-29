@@ -3,25 +3,26 @@ import surprise
 
 class FunkSVD(surprise.AlgoBase):
     # Randomly initializes two Matrices, Stochastic Gradient Descent to be able to optimize the best factorization for ratings.
-    def __init__(self, lr_all, n_epoch, n_factors, **kwargs):
+    def __init__(self, lr_all, reg_all, n_epoch, n_factors, **kwargs):
         # super(surprise.AlgoBase)
         super().__init__(**kwargs)
         self.alpha = lr_all  # learning rate for Stochastic Gradient Descent
         self.num_epochs = n_epoch
         self.num_factors = n_factors
+        self.reg_all = reg_all
 
     def fit(self, train):
         # randomly initialize user/item factors from a Gaussian
         P = np.random.normal(0, .1, (train.n_users, self.num_factors))
         Q = np.random.normal(0, .1, (train.n_items, self.num_factors))
-
+        self.mu = train.global_mean
         for epoch in range(self.num_epochs):
 
             for u, i, r_ui in train.all_ratings():
-                residual = r_ui - P[u] @ Q[i]
+                residual = r_ui - self.mu - P[u] @ Q[i]
                 temp = P[u]  # we want to update them at the same time, so we make a temporary variable.
-                P[u] += self.alpha * residual * Q[i]
-                Q[i] += self.alpha * residual * temp
+                P[u] += self.alpha * (residual * Q[i] - P[u] * self.reg_all)
+                Q[i] += self.alpha * (residual * temp - Q[i] * self.reg_all)
         self.P = P
         self.Q = P
 
@@ -31,7 +32,7 @@ class FunkSVD(surprise.AlgoBase):
 
         if self.trainset.knows_user(u) and self.trainset.knows_item(i):
             # return scalar product of P[u] and Q[i]
-            nanCheck = self.P[u] @ self.Q[i]
+            nanCheck = self.P[u] @ self.Q[i] + self.mu
 
             if np.isnan(nanCheck):
                 return self.trainset.global_mean
