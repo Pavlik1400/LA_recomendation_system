@@ -51,4 +51,14 @@ std::tuple<ratingVector<3>, hashMapWeight<T, N>, hashMapWeight<T, N>, hashMapBia
     mean /= R.size();
     return {R, Q, P, bu, bi, mean};
 }
+
+void combineData(const std::vector<std::string> &paths, const std::string &output){
+
+    std::ofstream ofile(output, std::ios::app);
+    for(auto &file: paths){
+        std::ifstream ifile(file);
+        ofile << ifile.rdbuf();
+        ifile.close();
+    }
+}
 #endif //FUNKSVD_DATA_LOADER_H

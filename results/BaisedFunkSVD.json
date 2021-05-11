@@ -1,0 +1,65 @@
+{
+    "split0_test_rmse": [
+        1.1019182953846554
+    ],
+    "split0_train_rmse": [
+        0.8880464307915886
+    ],
+    "split1_test_rmse": [
+        1.0853571031375964
+    ],
+    "split1_train_rmse": [
+        0.9158511926419136
+    ],
+    "mean_test_rmse": [
+        1.0936376992611259
+    ],
+    "std_test_rmse": [
+        0.008280596123529493
+    ],
+    "mean_train_rmse": [
+        0.9019488117167511
+    ],
+    "std_train_rmse": [
+        0.013902380925162494
+    ],
+    "rank_test_rmse": [
+        1
+    ],
+    "mean_fit_time": [
+        0.20089149475097656
+    ],
+    "std_fit_time": [
+        0.010298013687133789
+    ],
+    "mean_test_time": [
+        0.0032149553298950195
+    ],
+    "std_test_time": [
+        4.1365623474121094e-05
+    ],
+    "params": [
+        {
+            "lr_all": 0.01,
+            "n_epochs": 10,
+            "n_factors": 10,
+            "reg_all": 0.01,
+            "verbose": true
+        }
+    ],
+    "param_lr_all": [
+        0.01
+    ],
+    "param_n_epochs": [
+        10
+    ],
+    "param_n_factors": [
+        10
+    ],
+    "param_reg_all": [
+        0.01
+    ],
+    "param_verbose": [
+        true
+    ]
+}

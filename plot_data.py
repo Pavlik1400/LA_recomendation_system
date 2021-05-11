@@ -40,7 +40,7 @@ def main(args):
 
                 if not divide:
                     plt.subplot(2, 2, 1)
-                MIN = 0.8
+                MIN = 0.95
                 plt.grid(axis='y', alpha=0.75)
                 plt.yticks(np.arange(MIN, max(test_rmses), max(0.01, (max(test_rmses) - MIN)/30)))
                 plt.ylabel("mean RMSE")
@@ -52,7 +52,7 @@ def main(args):
                       f'on split: {min_rmse_split}')
 
                 for index, value in enumerate(test_rmses[sorted_indecies]):
-                    plt.text(index, value+0.01, str(round(value, 4)), rotation=70)
+                    plt.text(index, value+0.003, str(round(value, 4)), rotation=70)
                 plt.bar(x=range(len(sorted_indecies)), height=(test_rmses[sorted_indecies]-MIN), tick_label=sorted_indecies,
                         color="red", bottom=MIN)
 

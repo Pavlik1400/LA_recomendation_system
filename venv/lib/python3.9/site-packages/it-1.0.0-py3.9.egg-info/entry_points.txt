@@ -1,0 +1,4 @@
+[console_scripts]
+inspectortiger = it.__main__:main
+it = it.__main__:main
+

@@ -9,9 +9,12 @@
 #include "utils.h"
 #include "time_measure.h"
 
-std::string FILENAME = "combined_data_1.txt";
+std::string FILENAME = "combined.txt";
 
-int main() {
+int main(int argc, char **argv) {
+    if(argc > 1){
+        FILENAME = std::string(argv[1]);
+    }
     std::random_device rd;
     std::mt19937 gen(rd());
     std::normal_distribution<double> dist(0.0, 1.0);
@@ -43,6 +46,8 @@ int main() {
     std::cout << "SetUp: " << to_ms(c - b)/1e6 << std::endl;
     std::cout << "Train: " << to_ms(d - c)/1e6 << std::endl;
     std::cout << "Test: " << to_ms(e - d)/1e6 << std::endl;
+//    auto files = std::vector{std::string {"../combined_data_1.txt"}, std::string {"../combined_data_2.txt"}, std::string {"../combined_data_3.txt"}, std::string {"../combined_data_4.txt"}};
+//    combineData(files, "combined.txt");
 
     return 0;
 }
