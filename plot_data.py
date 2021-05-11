@@ -40,7 +40,7 @@ def main(args):
 
                 if not divide:
                     plt.subplot(2, 2, 1)
-                MIN = 0.8
+                MIN = 0.95
                 plt.grid(axis='y', alpha=0.75)
                 plt.yticks(np.arange(MIN, max(test_rmses), max(0.01, (max(test_rmses) - MIN)/30)))
                 plt.ylabel("mean RMSE")

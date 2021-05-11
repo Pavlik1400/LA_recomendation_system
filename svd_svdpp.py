@@ -10,7 +10,8 @@ from pprint import pprint
 import itertools as it
 
 
-ALGOS = [SVD, SVDpp]
+# ALGOS = [SVD, SVDpp]
+ALGOS = [SVDpp]
 
 # shit shit shit shit shit
 baseline_params = {
@@ -43,11 +44,25 @@ PARAMS = {
         'reg_all': [0.01, 0.02],
         'verbose': [True]
     },
+    # 'SVD': {
+    #     'lr_all': [0.01, 0.02, 0.03],
+    #     'n_epochs': [10, 15],
+    #     'n_factors': [10, 15],
+    #     'reg_all': [0.01],
+    #     'verbose': [True]
+    # },
+    # 'SVDpp': {
+    #     'lr_all': [0.005, 0.01, 0.03],
+    #     'n_epochs': [5, 10],
+    #     'n_factors': [10, 15],
+    #     'reg_all': [0.01],
+    #     'verbose': [True]
+    # }
     'SVDpp': {
-        'lr_all': [0.005, 0.01, 0.03],
-        'n_epochs': [5, 10],
-        'n_factors': [10, 15],
-        'reg_all': [0.01],
+        'n_epochs': [30],
+        'n_factors': [100],
+        'lr_all': [0.007],
+        'reg_all': [0.02],
         'verbose': [True]
     }
 }
@@ -84,6 +99,7 @@ def main(args, algos=None, verbose=True, nth=30):
         print("Reading data...")
     df = pd.read_csv(args.data, header=0)
     df = df[df.index % nth == 0]
+
     reader = Reader(rating_scale=(1, 5))
     data = Dataset.load_from_df(df[['Cust_Id', 'Movie_Id', 'Rating']], reader)
     after_read = time.time()
@@ -114,7 +130,7 @@ if __name__ == '__main__':
                         required=True)
 
     args = parser.parse_args()
-    main(args, algos=ALGOS, verbose=True, nth=10)
+    main(args, algos=ALGOS, verbose=True, nth=2)
 #
 #
 # params = {
