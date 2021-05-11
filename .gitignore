@@ -4,3 +4,4 @@ datasets/MoviesRecommendation.csv
 FunkSVD/.idea
 FunkSVD/cmake*
 FunkSVD/combined.txt
+venv
